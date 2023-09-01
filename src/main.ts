@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 function setupSwagger(app: INestApplication) {
   const config = new DocumentBuilder()
@@ -15,9 +16,17 @@ function setupSwagger(app: INestApplication) {
 }
 
 async function bootstrap() {
+  const logger = new Logger(bootstrap.name);
   const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe());
   setupSwagger(app);
-  await app.listen(3000);
+
+  const configService = app.get(ConfigService);
+  const port: number = configService.get<number>('PORT', 3000);
+  await app.listen(port);
+
+  logger.log(`App started in port ${port}`);
+  logger.verbose(`View API Documentation with swagger: http://localhost:${port}/api`);
 }
 
 bootstrap();
