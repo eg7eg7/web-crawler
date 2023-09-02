@@ -1,8 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ICrawlData } from '../types/index';
+import { launch, Page } from 'puppeteer';
+import { isLink } from './utils';
+import { v4 as uuid4 } from 'uuid';
+import * as fs from 'fs';
+import { join } from 'path';
+import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class CrawlerService {
-  constructor() {}
+  private logger = new Logger(CrawlerService.name);
+  private screenshotDirectory: string;
+  constructor(private readonly configService: ConfigService) {
+    this.screenshotDirectory = join(__dirname, '../../', this.configService.get<string>('SCREENSHOT_DIR', './screenshots'));
+
+    if (!fs.existsSync(this.screenshotDirectory)) {
+      this.logger.verbose(`Creating new directory ${this.screenshotDirectory} for screenshots`);
+      fs.mkdirSync(this.screenshotDirectory);
+    } else {
+      this.logger.verbose(`Directory ${this.screenshotDirectory} for screenshots exists`);
+    }
+  }
 
   /**
    *
@@ -10,26 +28,110 @@ export class CrawlerService {
    *
    */
   async crawl(url: string): Promise<ICrawlData> {
-    return {
+    this.logger.verbose(`Start crawling ${url}`);
+    const page = await this._loadPage(url);
+    const [links, screenshot, stylesheets, scripts] = await Promise.all([
+      this._getLinks(page, url),
+      this._getScreenshot(page, url),
+      this._getStylesheets(page, url),
+      this._getScripts(page, url),
+    ]);
+
+    await page.close();
+    const data = {
       url,
-      links: [],
-      screenshot: '',
-      scripts: [],
-      stylesheets: [],
+      links,
+      screenshot,
+      scripts,
+      stylesheets,
     };
+
+    return data;
+  }
+
+  /**
+   *
+   * @param url
+   */
+  private async _loadPage(url: string): Promise<Page> {
+    const browser = await launch({ headless: 'new' });
+
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1920, height: 1080 });
+    // Waits until page is loaded - assumes that two finished network connections are enough to consider a page loaded
+    await page.goto(url, { waitUntil: 'networkidle2' });
+    return page;
   }
 
   /**
    *
    */
-  private _getLinks(): string[] {
+  private async _getLinks(page: Page, url: string): Promise<string[]> {
+    try {
+      const links = await page.$$eval('a', (anchors) => {
+        return anchors.map((anchor) => anchor.href);
+      });
+      return Array.from(new Set(links.filter((link) => isLink(link)))).sort((a, b) => a.localeCompare(b));
+    } catch (err) {
+      this.logger.error(`Could not get links for page ${url}, error: ${err.message}`);
+      return [];
+    }
+  }
+
+  /**
+   *
+   */
+  private async _getScreenshot(page: Page, url: string): Promise<string> {
+    const screenshotPath = join(this.screenshotDirectory, `${uuid4()}.jpeg`);
+    try {
+      const screenshot = await page.screenshot({
+        fullPage: true,
+        type: 'jpeg',
+        quality: 100,
+      });
+      fs.writeFileSync(screenshotPath, screenshot, {});
+    } catch (err) {
+      this.logger.error(`Could not take screenshot of url ${url}, error: ${err.message}`);
+      return '';
+    }
+
+    return screenshotPath;
+  }
+
+  private async _getScripts(page: Page, url: string): Promise<string[]> {
+    try {
+      // Extract all external script URLs
+      const externalScripts = await page.$$eval('script[src]', (scripts) => {
+        return scripts.map((script) => script.src);
+      });
+
+      // Extract all inline script content
+      const inlineScripts = await page.$$eval('script:not([src])', (scripts) => {
+        return scripts.map((script) => script.textContent);
+      });
+      return [...externalScripts, ...inlineScripts];
+    } catch (err) {
+      this.logger.error(`Could not take scripts for url ${url}, error: ${err.message}`);
+      return [];
+    }
     return [];
   }
 
-  /**
-   *
-   */
-  private getScreenshot(): string {
-    return '';
+  private async _getStylesheets(page: Page, url: string): Promise<string[]> {
+    try {
+      // Extract all linked stylesheets
+      const linkedStylesheets = await page.$$eval('link[rel="stylesheet"]', (links) => {
+        return links.map((link) => link.href);
+      });
+
+      // Extract all inline style content
+      const inlineStyles = await page.$$eval('style', (styleTags) => {
+        return styleTags.map((styleTag) => styleTag.textContent);
+      });
+      return [...inlineStyles, ...linkedStylesheets];
+    } catch (err) {
+      this.logger.error(`Could not take stylesheets for url ${url}, error: ${err.message}`);
+      return [];
+    }
   }
 }

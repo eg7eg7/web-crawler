@@ -1,10 +1,11 @@
-import { Prop, Schema as NestSchema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import { ICrawlTask } from 'src/types';
 
 export type CrawlerTaskDocument = HydratedDocument<CrawlerTask>;
 
-@NestSchema({
+@Schema({
+  collection: 'crawler-task',
   timestamps: true,
   _id: true,
   versionKey: false,

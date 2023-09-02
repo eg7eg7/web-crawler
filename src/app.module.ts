@@ -11,7 +11,7 @@ import { CrawlTaskConsumer } from './crawler.processor';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     DalModule,
     CrawlerModule,
     MongooseModule.forRootAsync({

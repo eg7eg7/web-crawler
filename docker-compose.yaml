@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  crawler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    env_file: '.env.docker-compose'
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - appNetwork
   mongo:
     image: mongo:7.0-rc
     container_name: mongo
@@ -8,13 +20,21 @@ services:
       - '27017:27017'
     volumes:
       - mongo_data:/data/db
+    networks:
+      - appNetwork
   redis:
     image: 'redis:7.2.0'
     ports:
       - '6379:6379'
     volumes:
       - redis-data:/data
+    networks:
+      - appNetwork
 
 volumes:
   mongo_data:
   redis-data:
+
+networks:
+  appNetwork:
+    driver: bridge

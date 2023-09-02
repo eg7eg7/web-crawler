@@ -1,0 +1,10 @@
+.git
+node_modules
+**/**/dist
+.husky
+.vscode
+.env.example
+.env
+docker-compose.yaml
+Dockerfile
+screenshots
