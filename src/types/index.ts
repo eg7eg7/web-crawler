@@ -11,3 +11,5 @@ export interface ICrawlData {
 }
 
 export type ICrawlTask = ICrawlTaskRequest & ICrawlData;
+
+export const CRAWLER_QUEUE = 'crawler-queue';

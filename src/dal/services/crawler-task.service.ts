@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CrawlerTask } from '../schemas/crawler-task.schema';
-import { TaskId } from 'src/types';
+import { ICrawlData, TaskId } from 'src/types';
 
 @Injectable()
 export class DalCrawlerTaskService {
@@ -33,5 +33,9 @@ export class DalCrawlerTaskService {
    */
   async getById(id: string) {
     return this.crawlTaskModel.findById(id, undefined, { lean: true });
+  }
+
+  async update(id: string, data: ICrawlData) {
+    return this.crawlTaskModel.findOneAndUpdate({ _id: new Types.ObjectId(id) }, data);
   }
 }
