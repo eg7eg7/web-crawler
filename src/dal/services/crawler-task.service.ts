@@ -35,7 +35,13 @@ export class DalCrawlerTaskService {
     return this.crawlTaskModel.findById(id, undefined, { lean: true });
   }
 
-  async update(id: string, data: ICrawlData) {
-    return this.crawlTaskModel.findOneAndUpdate({ _id: new Types.ObjectId(id) }, data);
+  async update(id: string, data: ICrawlData, isProcessed: boolean) {
+    return this.crawlTaskModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      {
+        ...data,
+        isProcessed,
+      },
+    );
   }
 }

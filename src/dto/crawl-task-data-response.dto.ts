@@ -10,4 +10,13 @@ export class CrawlTaskDataResponseDto implements ICrawlTask {
 
   @ApiProperty({ type: [String], example: ['https://www.akamai.com'] })
   links: string[];
+
+  @ApiProperty({ type: String })
+  screenshot: string;
+
+  @ApiProperty({ type: [String] })
+  scripts: string[];
+
+  @ApiProperty({ type: [String] })
+  stylesheets: string[];
 }

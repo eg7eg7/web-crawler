@@ -7,6 +7,7 @@ export type CrawlerTaskDocument = HydratedDocument<CrawlerTask>;
 @NestSchema({
   timestamps: true,
   _id: true,
+  versionKey: false,
 })
 export class CrawlerTask implements ICrawlTask {
   @Prop({ type: MongooseSchema.Types.ObjectId })
@@ -15,8 +16,20 @@ export class CrawlerTask implements ICrawlTask {
   @Prop({ type: String, required: true })
   url: string;
 
-  @Prop({ type: [String], required: true, default: [] })
+  @Prop({ type: [String] })
   links: string[];
+
+  @Prop({ type: [String] })
+  scripts: string[];
+
+  @Prop({ type: [String] })
+  stylesheets: string[];
+
+  @Prop({ type: String })
+  screenshot: string;
+
+  @Prop({ type: Boolean, required: true, default: false })
+  isProcessed: boolean;
 }
 
 export const CrawlerTaskSchema = SchemaFactory.createForClass(CrawlerTask);
