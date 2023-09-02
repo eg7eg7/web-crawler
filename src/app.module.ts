@@ -6,7 +6,7 @@ import { DalModule } from './dal/dal.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CrawlerModule } from './crawler';
 import { BullModule } from '@nestjs/bull';
-import { CRAWLER_QUEUE } from './types';
+import { CRAWLER_QUEUE, ENV_VARIABLE } from './types';
 import { CrawlTaskConsumer } from './crawler.processor';
 
 @Module({
@@ -17,7 +17,7 @@ import { CrawlTaskConsumer } from './crawler.processor';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get('MONGO_URI'),
+        uri: configService.get(ENV_VARIABLE.MONGO_URI),
       }),
       inject: [ConfigService],
     }),
@@ -25,8 +25,8 @@ import { CrawlTaskConsumer } from './crawler.processor';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         redis: {
-          host: configService.get('REDIS_QUEUE_HOST'),
-          port: configService.get('REDIS_QUEUE_PORT'),
+          host: configService.get(ENV_VARIABLE.REDIS_QUEUE_HOST),
+          port: configService.get(ENV_VARIABLE.REDIS_QUEUE_PORT),
         },
       }),
       inject: [ConfigService],

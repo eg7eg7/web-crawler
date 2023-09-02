@@ -13,6 +13,8 @@ services:
       - redis
     networks:
       - appNetwork
+    volumes:
+      - ./screenshots:/app/screenshots
   mongo:
     image: mongo:7.0-rc
     container_name: mongo

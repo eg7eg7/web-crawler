@@ -14,6 +14,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @ApiBody({ type: CrawlTaskRequestDto, required: true })
+  @ApiResponse({ type: CrawlTaskResponseDto })
   @Post('crawl')
   async crawl(@Body() job: CrawlTaskRequestDto): Promise<CrawlTaskResponseDto> {
     try {

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ICrawlData } from '../types/index';
+import { ENV_VARIABLE, ICrawlData, IScript, IStylesheet, SourceType } from '../types/index';
 import { launch, Page } from 'puppeteer';
 import { isLink } from './utils';
 import { v4 as uuid4 } from 'uuid';
@@ -12,7 +12,7 @@ export class CrawlerService {
   private logger = new Logger(CrawlerService.name);
   private screenshotDirectory: string;
   constructor(private readonly configService: ConfigService) {
-    this.screenshotDirectory = join(__dirname, '../../', this.configService.get<string>('SCREENSHOT_DIR', './screenshots'));
+    this.screenshotDirectory = join(__dirname, '../../', this.configService.get<string>(ENV_VARIABLE.SCREENSHOT_DIR, './screenshots'));
 
     if (!fs.existsSync(this.screenshotDirectory)) {
       this.logger.verbose(`Creating new directory ${this.screenshotDirectory} for screenshots`);
@@ -54,7 +54,7 @@ export class CrawlerService {
    * @param url
    */
   private async _loadPage(url: string): Promise<Page> {
-    const browser = await launch({ headless: 'new' });
+    const browser = await launch({ headless: 'new', args: ['--enable-gpu'] });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1920, height: 1080 });
@@ -98,37 +98,56 @@ export class CrawlerService {
     return screenshotPath;
   }
 
-  private async _getScripts(page: Page, url: string): Promise<string[]> {
+  private async _getScripts(page: Page, url: string): Promise<IScript[]> {
     try {
       // Extract all external script URLs
-      const externalScripts = await page.$$eval('script[src]', (scripts) => {
+      const external = await page.$$eval('script[src]', (scripts) => {
         return scripts.map((script) => script.src);
       });
 
       // Extract all inline script content
-      const inlineScripts = await page.$$eval('script:not([src])', (scripts) => {
+      const inline = await page.$$eval('script:not([src])', (scripts) => {
         return scripts.map((script) => script.textContent);
       });
-      return [...externalScripts, ...inlineScripts];
+      const externalScripts: IScript[] = external.map((script: string) => ({
+        type: SourceType.LINK,
+        script: script,
+      }));
+
+      const inlineScripts: IScript[] = inline.map((script: string) => ({
+        type: SourceType.INLINE,
+        script: script,
+      }));
+
+      return [...inlineScripts, ...externalScripts];
     } catch (err) {
       this.logger.error(`Could not take scripts for url ${url}, error: ${err.message}`);
       return [];
     }
-    return [];
   }
 
-  private async _getStylesheets(page: Page, url: string): Promise<string[]> {
+  private async _getStylesheets(page: Page, url: string): Promise<IStylesheet[]> {
     try {
       // Extract all linked stylesheets
-      const linkedStylesheets = await page.$$eval('link[rel="stylesheet"]', (links) => {
+      const linked = await page.$$eval('link[rel="stylesheet"]', (links) => {
         return links.map((link) => link.href);
       });
 
       // Extract all inline style content
-      const inlineStyles = await page.$$eval('style', (styleTags) => {
+      const inline = await page.$$eval('style', (styleTags) => {
         return styleTags.map((styleTag) => styleTag.textContent);
       });
-      return [...inlineStyles, ...linkedStylesheets];
+
+      const inlineStyle: IStylesheet[] = inline.map((style) => ({
+        type: SourceType.INLINE,
+        stylesheet: style,
+      }));
+
+      const linkedStylesheets: IStylesheet[] = linked.map((style) => ({
+        type: SourceType.LINK,
+        stylesheet: style,
+      }));
+      return [...inlineStyle, ...linkedStylesheets];
     } catch (err) {
       this.logger.error(`Could not take stylesheets for url ${url}, error: ${err.message}`);
       return [];

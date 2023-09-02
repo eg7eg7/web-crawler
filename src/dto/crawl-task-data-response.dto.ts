@@ -1,5 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ICrawlTask } from 'src/types';
+import { ICrawlTask, IScript, IStylesheet, SourceType } from 'src/types';
+
+export class ScriptDto implements IScript {
+  @ApiProperty({ enum: SourceType })
+  type: SourceType;
+
+  @ApiProperty({ type: String, description: 'Link to script if type is "link", actual script if type "inline"' })
+  script: string;
+}
+
+export class StylesheetDto implements IStylesheet {
+  @ApiProperty({ enum: SourceType })
+  type: SourceType;
+
+  @ApiProperty({ type: String, description: 'Link to stylesheet if type is "link", actual stylesheet if type "inline"' })
+  stylesheet: string;
+}
 
 export class CrawlTaskDataResponseDto implements ICrawlTask {
   @ApiProperty({ example: '64f2f1f4d1714a3ca413ca65' })
@@ -14,9 +30,9 @@ export class CrawlTaskDataResponseDto implements ICrawlTask {
   @ApiProperty({ type: String })
   screenshot: string;
 
-  @ApiProperty({ type: [String] })
-  scripts: string[];
+  @ApiProperty({ type: [ScriptDto] })
+  scripts: IScript[];
 
-  @ApiProperty({ type: [String] })
-  stylesheets: string[];
+  @ApiProperty({ type: [StylesheetDto] })
+  stylesheets: IStylesheet[];
 }

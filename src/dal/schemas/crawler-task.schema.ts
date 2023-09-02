@@ -1,8 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { ICrawlTask } from 'src/types';
+import { ICrawlTask, IScript, IStylesheet, SourceType } from 'src/types';
 
 export type CrawlerTaskDocument = HydratedDocument<CrawlerTask>;
+
+@Schema({ _id: false })
+class Stylesheet implements IStylesheet {
+  @Prop({ type: String, required: true, enum: SourceType })
+  type: SourceType;
+
+  @Prop({ type: String, required: true })
+  stylesheet: string;
+}
+const StylesheetSchema = SchemaFactory.createForClass(Stylesheet);
+@Schema({ _id: false })
+class Script implements IScript {
+  @Prop({ type: String, required: true, enum: SourceType })
+  type: SourceType;
+
+  @Prop({ type: String, required: true })
+  script: string;
+}
+const ScriptSchema = SchemaFactory.createForClass(Script);
 
 @Schema({
   collection: 'crawler-task',
@@ -20,11 +39,11 @@ export class CrawlerTask implements ICrawlTask {
   @Prop({ type: [String] })
   links: string[];
 
-  @Prop({ type: [String] })
-  scripts: string[];
+  @Prop({ type: [ScriptSchema] })
+  scripts: IScript[];
 
-  @Prop({ type: [String] })
-  stylesheets: string[];
+  @Prop({ type: [StylesheetSchema] })
+  stylesheets: IStylesheet[];
 
   @Prop({ type: String })
   screenshot: string;
