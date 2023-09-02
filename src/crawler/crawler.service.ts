@@ -54,7 +54,7 @@ export class CrawlerService {
    * @param url
    */
   private async _loadPage(url: string): Promise<Page> {
-    const browser = await launch({ headless: 'new', args: ['--enable-gpu'] });
+    const browser = await launch({ headless: 'new', args: ['--enable-gpu', '--no-sandbox', '--disable-setuid-sandbox'] });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1920, height: 1080 });
