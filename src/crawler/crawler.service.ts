@@ -107,7 +107,7 @@ export class CrawlerService {
 
       // Extract all inline script content
       const inline = await page.$$eval('script:not([src])', (scripts) => {
-        return scripts.map((script) => script.textContent);
+        return scripts.map((script) => script.textContent.replace(/\\n/g, ' ').replace(/\s/g, ''));
       });
       const externalScripts: IScript[] = external.map((script: string) => ({
         type: SourceType.LINK,
@@ -135,7 +135,7 @@ export class CrawlerService {
 
       // Extract all inline style content
       const inline = await page.$$eval('style', (styleTags) => {
-        return styleTags.map((styleTag) => styleTag.textContent);
+        return styleTags.map((styleTag) => styleTag.textContent.replace(/\\n/g, ' ').replace(/\s/g, ' '));
       });
 
       const inlineStyle: IStylesheet[] = inline.map((style) => ({
