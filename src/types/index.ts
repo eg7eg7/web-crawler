@@ -1,10 +1,13 @@
 export type TaskId = string;
 
-export interface CrawlTaskRequest {
-  id: TaskId;
+export interface ICrawlTaskRequest {
+  _id: TaskId;
   url: string;
 }
 
-export interface CrawlTaskData extends CrawlTaskRequest {
+export interface ICrawlData {
+  url: string;
   links: string[];
 }
+
+export type ICrawlTask = ICrawlTaskRequest & ICrawlData;

@@ -2,9 +2,10 @@ import { Body, Controller, Get, Param, Post, Logger, InternalServerErrorExceptio
 import { AppService } from './app.service';
 import { ApiTags, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { CrawlTaskRequestDto } from './dto/crawl-task-request.dto';
-import { CrawlTaskResponseDto } from './dto/crawl-task-response.dto';
-import { CrawlTaskData } from './types';
+import { GetTaskByIdDto } from './dto/get-task-by-id-request.dto';
+import { ICrawlTask } from './types';
 import { CrawlTaskDataResponseDto } from './dto/crawl-task-data-response.dto';
+import { CrawlTaskResponseDto } from './dto/crawl-task-response.dto';
 
 @ApiTags('crawler')
 @Controller()
@@ -33,7 +34,7 @@ export class AppController {
     type: [CrawlTaskDataResponseDto],
   })
   @Get('tasks')
-  async tasks(): Promise<Array<CrawlTaskData>> {
+  async tasks(): Promise<Array<ICrawlTask>> {
     const tasks = await this.appService.getAllTasks();
     return tasks;
   }
@@ -42,8 +43,8 @@ export class AppController {
     type: CrawlTaskDataResponseDto,
   })
   @Get('tasks/:id')
-  async getTask(@Param('id') id: string): Promise<CrawlTaskData> {
-    const task = await this.appService.getTask(id);
+  async getTask(@Param() params: GetTaskByIdDto): Promise<ICrawlTask> {
+    const task = await this.appService.getTask(params.id);
     return task;
   }
 }
